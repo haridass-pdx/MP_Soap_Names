@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-   // @Query private var items: [Item]
+    // @Query private var items: [Item]
     @Query private var names: [Name]
     @State private var isShowingPicker: Bool = false
     @State private var selectedFileURL: URL?
@@ -25,10 +25,10 @@ struct ContentView: View {
             return names.filter { $0.lastname.localizedCaseInsensitiveContains(searchText) }
         }
     }
-
+    
     var body: some View {
         
-      //  NavigationSplitView {
+        //  NavigationSplitView {
         VStack{
             Text("Names \(names.count)")
             HStack{
@@ -36,41 +36,51 @@ struct ContentView: View {
                 TextField("Last Name:", text: $searchText)
             }
             .frame(width: 250)
-
+            
             
             Table(filteredNames, selection: $selectedItem) {
                 TableColumn("Last", value: \.lastname)
                 TableColumn("First", value: \.firstname)
-               
+                
                 TableColumn("ID", value: \.dbid)
+                TableColumn("DB", value: \.dbSource)
+                
+                TableColumn("Start") { name in
+                    Text(name.startDate?.formatted(date: .numeric, time: .omitted) ?? "")
+                }
+                TableColumn("End") { name in
+                    Text(name.endDate?.formatted(date: .numeric, time: .omitted) ?? "")
+                }
+                TableColumn("Count") { name in
+                    Text("\(name.count)")
+                }
                 TableColumn("DOB") { name in
                     Text(name.dob?.formatted(date: .numeric, time: .omitted) ?? "")
                 }
-                
-                
             }
-            .onChange(of: selectedItem) { id in
-                if let id = id {
-                    print(names.first(where: { $0.id == id })!)
+            
+            
+        }
+        .onChange(of: selectedItem) { id in
+            if let id = id {
+                print(names.first(where: { $0.id == id })!)
+            }
+        }
+        
+        .toolbar {
+            ToolbarItem {
+                Button(action: addItem) {
+                    Label("Add Item", systemImage: "plus")
                 }
+                
             }
+        }
     
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                    
-                }
-            }
-        }
-    /*    } detail: {
-            Text("Select an item")
-        }*/
-        Button("Import", systemImage: "arrow.up.folder"){
-            isShowingPicker = true
-        }
-        Spacer()
+ 
+    Button("Import", systemImage: "arrow.up.folder"){
+        isShowingPicker = true
+    }
+    Spacer()
         .fileImporter(
             isPresented: $isShowingPicker,
             allowedContentTypes: [.pdf, .png, .plainText, .commaSeparatedText],
@@ -78,7 +88,7 @@ struct ContentView: View {
         ) { result in
             switch result {
             case .success(let urls):
-                 if let url = urls.first
+                if let url = urls.first
                 {
                     importCSV(url: url, modelContext: modelContext)
                 }
@@ -87,28 +97,28 @@ struct ContentView: View {
                 print("Error selecting file: \(error.localizedDescription)")
             }
         }
-    }
+}
 
-    private func importData() {
-        isShowingPicker = true
-
-        }
-
+private func importData() {
+    isShowingPicker = true
     
-    private func addItem() {
-        withAnimation {
-            let newItem = Name(dbid: "ID", lastname: "LN", firstname: "FN", gender: "female", dob:  nil, startDate: nil, endDate: nil, count: 0, dbSource: "DB")
-            modelContext.insert(newItem)
-        }
-    }
+}
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(names[index])
-            }
+
+private func addItem() {
+    withAnimation {
+        let newItem = Name(dbid: "ID", lastname: "LN", firstname: "FN", gender: "female", dob:  nil, startDate: nil, endDate: nil, count: 0, dbSource: "DB")
+        modelContext.insert(newItem)
+    }
+}
+
+private func deleteItems(offsets: IndexSet) {
+    withAnimation {
+        for index in offsets {
+            modelContext.delete(names[index])
         }
     }
+}
 }
 
 #Preview {
