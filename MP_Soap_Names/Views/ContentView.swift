@@ -17,34 +17,56 @@ struct ContentView: View {
     @State private var selectedFileURL: URL?
     @State private var selectedItem: Name.ID?
     @State private var searchText = ""
-    
+    @State var menuSelection = "MP"
+    @State  var nameTypeSelection = "Last"
+    @State private var sortOrder = [KeyPathComparator(\Name.lastname)]
+
     var filteredNames: [Name] {
-        if searchText.isEmpty {
-            return names
-        } else {
-            return names.filter { $0.lastname.localizedCaseInsensitiveContains(searchText) }
+        names.filter { name in
+            (searchText.isEmpty || {
+                switch nameTypeSelection {
+                case "Last":
+                    return name.lastname.localizedCaseInsensitiveContains(searchText)
+                case "First":
+                    return name.firstname.localizedCaseInsensitiveContains(searchText)
+                default:
+                    return name.lastname.localizedCaseInsensitiveContains(searchText) || name.firstname.localizedCaseInsensitiveContains(searchText)
+                }
+            }())
+            &&
+            (menuSelection == "ALL" || name.dbSource == menuSelection)
         }
+        .sorted(using: sortOrder)
     }
     
     var body: some View {
         
         //  NavigationSplitView {
         VStack{
-            Text("Names \(names.count)")
+            Text("Names \(filteredNames.count)")
+            MenuView(menuSelection: $menuSelection,
+                     possible:  ["MP", "SOAP", "ALL"],
+                     queryString: "Data Source")
             HStack{
-                Text("Last Name: ")
-                TextField("Last Name:", text: $searchText)
+                Text("Name: ")
+                TextField("Name:", text: $searchText)
+                MenuView(menuSelection: $nameTypeSelection,
+                         possible:  ["Last", "First", "Both"],
+                         queryString: "Search Criteria")
+
+
             }
-            .frame(width: 250)
+            .frame(width: 400)
+            .onChange(of: menuSelection) { oldValue, newValue in
+                
+            }
             
             
-            Table(filteredNames, selection: $selectedItem) {
+            Table(filteredNames, selection: $selectedItem, sortOrder: $sortOrder) {
                 TableColumn("Last", value: \.lastname)
                 TableColumn("First", value: \.firstname)
-                
                 TableColumn("ID", value: \.dbid)
                 TableColumn("DB", value: \.dbSource)
-                
                 TableColumn("Start") { name in
                     Text(name.startDate?.formatted(date: .numeric, time: .omitted) ?? "")
                 }
@@ -69,10 +91,20 @@ struct ContentView: View {
         
         .toolbar {
             ToolbarItem {
+                Button(action: deleteSelectedItem) {
+                    Label("Delete", systemImage: "trash")
+                }
+                .disabled(selectedItem == nil)
+            }
+            ToolbarItem {
                 Button(action: addItem) {
                     Label("Add Item", systemImage: "plus")
                 }
-                
+            }
+        }
+        .task {
+            if names.isEmpty {
+                importBundledCSV(modelContext: modelContext)
             }
         }
     
@@ -112,11 +144,12 @@ private func addItem() {
     }
 }
 
-private func deleteItems(offsets: IndexSet) {
+private func deleteSelectedItem() {
+    guard let selectedItem,
+          let name = names.first(where: { $0.id == selectedItem }) else { return }
     withAnimation {
-        for index in offsets {
-            modelContext.delete(names[index])
-        }
+        modelContext.delete(name)
+        self.selectedItem = nil
     }
 }
 }
