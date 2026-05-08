@@ -102,11 +102,6 @@ struct ContentView: View {
                 }
             }
         }
-        .task {
-            if names.isEmpty {
-                importBundledCSV(modelContext: modelContext)
-            }
-        }
     
  
     Button("Import", systemImage: "arrow.up.folder"){

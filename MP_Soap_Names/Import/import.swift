@@ -7,6 +7,10 @@ func importBundledCSV(modelContext: ModelContext) {
         print("Bundled names.csv not found in app bundle")
         return
     }
+    
+    
+    //importCSV(url: url, modelContext: modelContext)
+    
 
     let dateFormatter = DateFormatter()
     dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -37,6 +41,7 @@ func importBundledCSV(modelContext: ModelContext) {
     } catch {
         print("Failed to import bundled CSV: \(error)")
     }
+     
 }
 
 func importCSV(url: URL, modelContext: ModelContext) {

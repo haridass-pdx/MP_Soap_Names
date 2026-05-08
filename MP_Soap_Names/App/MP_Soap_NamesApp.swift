@@ -16,14 +16,16 @@ struct MP_Soap_NamesApp: App {
             Name.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let storeURL = modelConfiguration.url
+
+        if !FileManager.default.fileExists(atPath: storeURL.path),
+           let bundledURL = Bundle.main.url(forResource: "default", withExtension: "store") {
+            try? FileManager.default.copyItem(at: bundledURL, to: storeURL)
+        }
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
-            print(URL.applicationSupportDirectory.path(percentEncoded: false))
-
         } catch {
-            // Schema changed during development — delete the old store and retry
-            let storeURL = modelConfiguration.url
             let related = [
                 storeURL,
                 storeURL.deletingPathExtension().appendingPathExtension("store-shm"),
@@ -42,7 +44,7 @@ struct MP_Soap_NamesApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CheckLoginView()
         }
         .modelContainer(sharedModelContainer)
     }
