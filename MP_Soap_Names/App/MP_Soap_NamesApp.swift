@@ -17,7 +17,7 @@ struct MP_Soap_NamesApp: App {
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         let storeURL = modelConfiguration.url
-
+        print(storeURL)
         if !FileManager.default.fileExists(atPath: storeURL.path),
            let bundledURL = Bundle.main.url(forResource: "default", withExtension: "store") {
             try? FileManager.default.copyItem(at: bundledURL, to: storeURL)
